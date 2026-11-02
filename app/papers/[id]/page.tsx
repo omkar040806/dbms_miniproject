@@ -134,6 +134,11 @@ function PaperView() {
               Open PDF ({Math.round((paper.pdf_size_bytes ?? 0) / 1024)} KB)
             </a>
           ) : null}
+          {paper.status === "approved" ? (
+            <Link href={`/graph?paper=${paper.paper_id}`} className="block text-accent underline">
+              Explore in the citation graph
+            </Link>
+          ) : null}
           <p className="text-xs text-muted">Added {formatDate(paper.created_at)}</p>
           {canDelete ? (
             <Button variant="danger" size="sm" onClick={handleDelete}>

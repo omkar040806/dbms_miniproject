@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { CoauthorNetwork } from "@/components/graph/coauthor-network";
 import { PaperCard } from "@/components/paper-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle, Stat } from "@/components/ui/card";
@@ -45,6 +46,8 @@ export default function AuthorPage() {
         <Stat label="Worldwide citations" value={author.external_citations.toLocaleString("en-IN")} />
         <Stat label="Active years" value={years} />
       </div>
+
+      <CoauthorNetwork authorId={author.author_id} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="space-y-3">
