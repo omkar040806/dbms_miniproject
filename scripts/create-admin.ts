@@ -1,5 +1,6 @@
 /**
- * Create the first admin account, or promote an existing user to admin.
+ * Create the first admin account, or promote an existing user to admin and reset
+ * their password to SEED_ADMIN_PASSWORD (useful if the admin password is lost).
  *   npm run admin:create
  * Reads SEED_ADMIN_EMAIL, SEED_ADMIN_NAME and SEED_ADMIN_PASSWORD from .env,
  * so no credentials are written in the source code.
@@ -19,7 +20,8 @@ async function main() {
   const { rows } = await query<{ user_id: number; inserted: boolean }>(
     `INSERT INTO users (full_name, email, password_hash, role)
      VALUES ($1, $2, $3, 'admin')
-     ON CONFLICT (email) DO UPDATE SET role = 'admin', is_active = TRUE
+     ON CONFLICT (email) DO UPDATE
+       SET role = 'admin', is_active = TRUE, password_hash = EXCLUDED.password_hash
      RETURNING user_id, (xmax = 0) AS inserted`,
     [name, email, passwordHash],
   );

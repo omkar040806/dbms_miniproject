@@ -21,17 +21,21 @@
     "test:db": "vitest run tests/db",
     "data:sample": "tsx scripts/seed-sample.ts",
     "data:import": "tsx scripts/import-openalex.ts",
-    "embed": "tsx scripts/embed-all.ts"
+    "embed": "tsx scripts/embed-all.ts",
+    "graph:rebuild": "tsx scripts/rebuild-graph.ts",
+    "graph:sync": "tsx scripts/sync-graph.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jose": "^6.2.14",
+    "neo4j-driver": "^6.3.0",
     "next": "^16.4.3",
     "pg": "^8.23.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-force-graph-2d": "^1.29.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {

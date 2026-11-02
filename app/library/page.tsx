@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GraphRecommendations } from "@/components/graph/recommendations";
 import { PaperCard } from "@/components/paper-card";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -144,6 +145,7 @@ export default function LibraryPage() {
         </section>
 
         <aside className="space-y-4">
+          <GraphRecommendations />
           <Card>
             <h2 className="text-lg font-semibold">Collections</h2>
             {data.collections.length === 0 ? <p className="mt-2 text-sm text-muted">Group papers by project or topic.</p> : null}
