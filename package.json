@@ -23,7 +23,8 @@
     "data:import": "tsx scripts/import-openalex.ts",
     "embed": "tsx scripts/embed-all.ts",
     "graph:rebuild": "tsx scripts/rebuild-graph.ts",
-    "graph:sync": "tsx scripts/sync-graph.ts"
+    "graph:sync": "tsx scripts/sync-graph.ts",
+    "db:explain": "tsx scripts/explain.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",
