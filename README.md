@@ -130,7 +130,9 @@ docker-compose.yml   PostgreSQL + pgvector, Neo4j
 | [08 Architecture](docs/08-architecture.md) | Layers, request flow, security |
 | [09 Testing](docs/09-testing.md) | Automated results and manual test cases |
 | [10 Conclusion](docs/10-conclusion.md) | Results, limitations, future work |
+| [11 Contributions](docs/11-contributions.md) | Who built what |
 | [Demo script](docs/demo-script.md) | 10-minute demo plan and viva answers |
+| [Screenshots](docs/screenshots/README.md) | Checklist of screenshots for the report |
 
 ## Troubleshooting
 
