@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SessionProvider } from "@/components/session-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -15,9 +16,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col antialiased">
-        <SiteHeader />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-        <SiteFooter />
+        <SessionProvider>
+          <SiteHeader />
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+          <SiteFooter />
+        </SessionProvider>
       </body>
     </html>
   );
