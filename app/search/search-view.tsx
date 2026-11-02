@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { AuthorSuggest } from "@/components/author-suggest";
 import { DomainSelect } from "@/components/domain-select";
 import { Pagination } from "@/components/pagination";
 import { PaperCard } from "@/components/paper-card";
@@ -111,8 +112,8 @@ export function SearchView() {
                 <Input id="yearTo" type="number" min={1900} max={2100} defaultValue={value("yearTo")} onBlur={(e) => update({ yearTo: e.target.value })} />
               </Field>
             </div>
-            <Field label="Author name contains" htmlFor="author">
-              <Input id="author" defaultValue={value("author")} onBlur={(e) => update({ author: e.target.value.trim() })} />
+            <Field label="Author" htmlFor="author" hint="Press Enter or pick a suggestion.">
+              <AuthorSuggest key={value("author")} initial={value("author")} onApply={(name) => update({ author: name })} />
             </Field>
             <Field label="Venue type" htmlFor="venueType">
               <Select id="venueType" value={value("venueType")} onChange={(e) => update({ venueType: e.target.value })}>
