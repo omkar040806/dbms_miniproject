@@ -5,7 +5,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/token";
 
-const RESEARCHER_PAGES = ["/library", "/upload", "/my-papers", "/collections"];
+// /collections/:id is not listed: public collections are shareable; the API hides private ones.
+const RESEARCHER_PAGES = ["/library", "/upload", "/my-papers"];
 const ADMIN_PAGES = ["/admin"];
 
 function matches(pathname: string, prefixes: string[]): boolean {
@@ -31,5 +32,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/library/:path*", "/upload/:path*", "/my-papers/:path*", "/collections/:path*", "/admin/:path*"],
+  matcher: ["/library/:path*", "/upload/:path*", "/my-papers/:path*", "/admin/:path*"],
 };
