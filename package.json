@@ -24,7 +24,8 @@
     "embed": "tsx scripts/embed-all.ts",
     "graph:rebuild": "tsx scripts/rebuild-graph.ts",
     "graph:sync": "tsx scripts/sync-graph.ts",
-    "db:explain": "tsx scripts/explain.ts"
+    "db:explain": "tsx scripts/explain.ts",
+    "analytics:refresh": "tsx scripts/refresh-analytics.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",
@@ -37,6 +38,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-force-graph-2d": "^1.29.2",
+    "recharts": "^3.10.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
