@@ -1,0 +1,8 @@
+# Keep LF line endings in the repo. Shell scripts mounted into Docker
+# fail with "bad interpreter" if Windows CRLF endings sneak in.
+* text=auto eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

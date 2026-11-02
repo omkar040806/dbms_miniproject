@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets: never commit real credentials
+.env
+.env.local
+.env.*.local
+
+# user-uploaded PDFs (metadata lives in PostgreSQL)
+uploads/
+
+# embedding model cache downloaded by Transformers.js
+.cache/
+
+# logs and OS files
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# test coverage
+coverage/

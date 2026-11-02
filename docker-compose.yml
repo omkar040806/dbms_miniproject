@@ -1,0 +1,49 @@
+# Local databases for development. Values come from the `.env` file.
+# Start:  docker compose up -d      Stop:  docker compose down
+# Wipe all data (careful):            docker compose down -v
+name: research-platform
+
+services:
+  postgres:
+    # Official image = PostgreSQL 18 with the pgvector extension pre-installed.
+    image: pgvector/pgvector:pg18
+    container_name: rp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_OWNER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD}
+      # Read by db/init/01-create-app-role.sh on the first start.
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql.
+      - pgdata:/var/lib/postgresql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  neo4j:
+    # Community Edition. Pin one exact tag so both laptops run the same version.
+    image: neo4j:2026.07.1
+    container_name: rp-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER}/${NEO4J_PASSWORD}
+      # Keep memory small enough for a student laptop.
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512m
+    ports:
+      - "7474:7474" # Neo4j Browser: http://localhost:7474
+      - "7687:7687" # Bolt protocol used by neo4j-driver
+    volumes:
+      - neo4jdata:/data
+
+volumes:
+  pgdata:
+  neo4jdata:
