@@ -18,7 +18,9 @@
     "admin:create": "tsx scripts/create-admin.ts",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:db": "vitest run tests/db"
+    "test:db": "vitest run tests/db",
+    "data:sample": "tsx scripts/seed-sample.ts",
+    "data:import": "tsx scripts/import-openalex.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
