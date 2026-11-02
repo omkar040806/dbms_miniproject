@@ -1,6 +1,7 @@
 import { apiHandler, json, parseBody, parseId, type RouteContext } from "@/lib/api/http";
 import { requireRole } from "@/lib/auth/session";
 import { reviewPaper } from "@/lib/db/queries/admin";
+import { refreshAnalytics } from "@/lib/db/queries/analytics";
 import { embedPaper } from "@/lib/db/queries/embeddings";
 import { drainSyncQueue } from "@/lib/graph/sync";
 import { reviewSchema } from "@/lib/validation/admin";
@@ -23,6 +24,11 @@ export const POST = apiHandler(async (request, { params }: RouteContext<{ id: st
     } catch (error) {
       warnings.push(`Embedding not created yet: ${error instanceof Error ? error.message : error}`);
     }
+  }
+  try {
+    await refreshAnalytics(); // keep the trends materialized view current
+  } catch (error) {
+    warnings.push(`Analytics not refreshed: ${error instanceof Error ? error.message : error}`);
   }
   try {
     await drainSyncQueue();

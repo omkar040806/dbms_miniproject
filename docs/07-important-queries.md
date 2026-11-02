@@ -171,3 +171,153 @@ USING collections c
 WHERE cp.collection_id = c.collection_id
   AND c.collection_id = $1 AND c.user_id = $2 AND cp.paper_id = $3;
 ```
+
+## Part B: administration, analytics and graph (Member B)
+
+### B1. Moderation decision: row lock, transaction-local settings, trigger audit
+
+`lib/db/queries/admin.ts → reviewPaper()`
+
+```sql
+BEGIN;
+SELECT status FROM papers WHERE paper_id = $1 FOR UPDATE;   -- a second admin waits here
+SELECT set_config('app.current_user_id', $2, true),
+       set_config('app.moderation_reason', $3, true);       -- like SET LOCAL
+UPDATE papers SET status = 'approved' WHERE paper_id = $1;
+-- trigger trg_papers_moderation_update -> INSERT INTO moderation_log (...)
+-- trigger trg_papers_graph_sync        -> INSERT INTO graph_sync_queue (...)
+COMMIT;
+```
+
+A rejection without a reason fails on `ck_modlog_reject_reason` inside the trigger, so the
+whole `UPDATE` rolls back: the rule holds even if someone bypasses the API.
+
+### B2. Last-admin guard with row locks
+
+`lib/db/queries/admin.ts → updateUser()`
+
+```sql
+BEGIN;
+SELECT user_id FROM users WHERE role = 'admin' AND is_active ORDER BY user_id FOR UPDATE;
+SELECT role, is_active FROM users WHERE user_id = $1 FOR UPDATE;
+-- refuse if this would leave zero active admins
+UPDATE users SET role = COALESCE($2, role), is_active = COALESCE($3, is_active) WHERE user_id = $1;
+COMMIT;
+```
+
+### B3. Outbox processing with SKIP LOCKED
+
+`lib/graph/sync.ts → drainSyncQueue()`
+
+```sql
+SELECT job_id, entity, op, payload
+FROM graph_sync_queue
+WHERE processed_at IS NULL AND attempts < 5
+ORDER BY job_id
+LIMIT 500
+FOR UPDATE SKIP LOCKED;
+```
+
+### B4. GROUP BY ... HAVING: popular domains
+
+`lib/db/queries/analytics.ts`
+
+```sql
+SELECT d.name AS domain_name, COUNT(DISTINCT p.paper_id) AS papers,
+       ROUND(AVG(GREATEST(p.citation_count, p.external_citation_count)), 1) AS avg_citations,
+       COUNT(v.view_id) AS views_90d
+FROM papers p
+JOIN domains d ON d.domain_id = p.domain_id
+LEFT JOIN paper_views v ON v.paper_id = p.paper_id AND v.viewed_at > now() - INTERVAL '90 days'
+WHERE p.status = 'approved'
+GROUP BY d.domain_id, d.name
+HAVING COUNT(DISTINCT p.paper_id) >= $1
+ORDER BY papers DESC;
+```
+
+### B5. Window function: top 3 papers per domain
+
+```sql
+SELECT * FROM (
+  SELECT d.name, p.title, GREATEST(p.citation_count, p.external_citation_count) AS citations,
+         RANK() OVER (PARTITION BY p.domain_id ORDER BY GREATEST(p.citation_count, p.external_citation_count) DESC) AS rank
+  FROM papers p JOIN domains d ON d.domain_id = p.domain_id
+  WHERE p.status = 'approved'
+) ranked
+WHERE rank <= 3;
+```
+
+### B6. Correlated subquery: cited above the domain average
+
+```sql
+SELECT p.title, GREATEST(p.citation_count, p.external_citation_count) AS citations
+FROM papers p
+WHERE p.status = 'approved'
+  AND GREATEST(p.citation_count, p.external_citation_count) >
+      (SELECT AVG(GREATEST(p2.citation_count, p2.external_citation_count))
+       FROM papers p2 WHERE p2.domain_id = p.domain_id AND p2.status = 'approved')
+ORDER BY citations DESC LIMIT 10;
+```
+
+### B7. h-index for all authors in one query
+
+```sql
+WITH ranked AS (
+  SELECT pa.author_id, GREATEST(p.citation_count, p.external_citation_count) AS cites,
+         ROW_NUMBER() OVER (PARTITION BY pa.author_id
+                            ORDER BY GREATEST(p.citation_count, p.external_citation_count) DESC) AS position
+  FROM paper_authors pa JOIN papers p ON p.paper_id = pa.paper_id AND p.status = 'approved'
+)
+SELECT a.full_name, COUNT(*) AS papers, COUNT(*) FILTER (WHERE r.cites >= r.position) AS h_index
+FROM ranked r JOIN authors a ON a.author_id = r.author_id
+GROUP BY a.author_id, a.full_name
+ORDER BY h_index DESC LIMIT 10;
+```
+
+### B8. Materialized view refresh through SECURITY DEFINER
+
+```sql
+SELECT fn_refresh_analytics();   -- runs REFRESH MATERIALIZED VIEW CONCURRENTLY as the owner
+```
+
+### B9. Same question in SQL and Cypher: papers within 2 citation hops
+
+SQL (`lib/db/queries/graph-sql.ts`):
+
+```sql
+WITH RECURSIVE hops (paper_id, depth, path) AS (
+    SELECT $1::int, 0, ARRAY[$1::int]
+    UNION ALL
+    SELECT nxt.id, h.depth + 1, h.path || nxt.id
+    FROM hops h
+    CROSS JOIN LATERAL (
+        SELECT c.cited_paper_id AS id FROM citations c WHERE c.citing_paper_id = h.paper_id
+        UNION ALL
+        SELECT c.citing_paper_id FROM citations c WHERE c.cited_paper_id = h.paper_id
+    ) nxt
+    JOIN papers p ON p.paper_id = nxt.id AND p.status = 'approved'
+    WHERE h.depth < $2 AND NOT nxt.id = ANY (h.path)
+)
+SELECT COUNT(DISTINCT paper_id) - 1 AS reachable FROM hops;
+```
+
+Cypher (`lib/graph/queries.ts`):
+
+```cypher
+MATCH (c:Paper {paper_id: $id})-[:CITES*1..2]-(n:Paper)
+WHERE n <> c
+RETURN count(DISTINCT n) AS reachable
+```
+
+### B10. Cypher: shortest citation path and co-citation recommendations
+
+```cypher
+MATCH (a:Paper {paper_id: $from}), (b:Paper {paper_id: $to})
+MATCH path = shortestPath((a)-[:CITES*..8]-(b))
+RETURN [n IN nodes(path) | n.title] AS chain;
+
+MATCH (mine:Paper)<-[:CITES]-(citer:Paper)-[:CITES]->(rec:Paper)
+WHERE mine.paper_id IN $ids AND NOT rec.paper_id IN $ids
+RETURN rec.title, count(DISTINCT citer) AS score
+ORDER BY score DESC LIMIT 10;
+```
