@@ -151,5 +151,5 @@ docker-compose.yml   PostgreSQL + pgvector, Neo4j
 
 | Member | Area |
 | --- | --- |
-| Member A | Papers and upload, full-text, semantic and hybrid search, embeddings, researcher profiles, personal library, indexes |
-| Member B | Authentication and roles, admin moderation and users, triggers and views, Neo4j graph, analytics, security |
+| Prahas Bodanapati | Papers and upload, full-text, semantic and hybrid search, embeddings, researcher profiles, personal library, indexes |
+| Omkar | Authentication and roles, admin moderation and users, triggers and views, Neo4j graph, analytics, security |
